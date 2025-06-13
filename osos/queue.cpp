@@ -39,8 +39,7 @@ Node* nclone(Node* node) {
 }
 
 Reply enqueue(Queue* queue, Item item) {
-    static mutex mtx;
-    lock_guard<mutex> lock(mtx);
+    lock_guard<mutex> lock(queue->mtx);
 
     Reply reply = { false, item };
 
@@ -58,9 +57,9 @@ Reply enqueue(Queue* queue, Item item) {
     return reply;
 }
 
+
 Reply dequeue(Queue* queue) {
-    static mutex mtx;
-    lock_guard<mutex> lock(mtx);
+    lock_guard<mutex> lock(queue->mtx);
 
     Reply reply = { false, {0, nullptr} };
     if (queue->size == 0) return reply;
@@ -76,9 +75,9 @@ Reply dequeue(Queue* queue) {
     return reply;
 }
 
+
 Queue* range(Queue* queue, Key start, Key end) {
-    static mutex mtx;
-    lock_guard<mutex> lock(mtx);
+    lock_guard<mutex> lock(queue->mtx);
 
     Queue* new_queue = init();
 
