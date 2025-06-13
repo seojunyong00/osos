@@ -79,16 +79,25 @@ Reply dequeue(Queue* queue) {
 
 
 Queue* range(Queue* queue, Key start, Key end) {
-    lock_guard<mutex> lock(queue->mtx);
+    Item temp[MAX_QUEUE_SIZE];
+    int count = 0;
+
+    {
+        lock_guard<mutex> lock(queue->mtx);
+        int size = queue->size.load();
+        for (int i = 0; i < size; ++i) {
+            Key k = queue->items[i].key;
+            if (start <= k && k <= end) {
+                temp[count++] = queue->items[i];
+            }
+        }
+    }
 
     Queue* new_queue = init();
-
-    for (int i = 0; i < queue->size; ++i) {
-        Key k = queue->items[i].key;
-        if (start <= k && k <= end) {
-            enqueue(new_queue, queue->items[i]);
-        }
+    for (int i = 0; i < count; ++i) {
+        enqueue(new_queue, temp[i]);
     }
 
     return new_queue;
 }
+
