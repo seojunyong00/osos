@@ -43,37 +43,39 @@ Reply enqueue(Queue* queue, Item item) {
 
     Reply reply = { false, item };
 
-    if (queue->size >= MAX_QUEUE_SIZE) return reply;
+    if (queue->size.load() >= MAX_QUEUE_SIZE) return reply;
 
-    int i = queue->size - 1;
+    int i = queue->size.load() - 1;
     while (i >= 0 && queue->items[i].key < item.key) {
         queue->items[i + 1] = queue->items[i];
         i--;
     }
     queue->items[i + 1] = item;
-    queue->size++;
+    queue->size.fetch_add(1);
 
     reply.success = true;
     return reply;
 }
+
 
 
 Reply dequeue(Queue* queue) {
     lock_guard<mutex> lock(queue->mtx);
 
     Reply reply = { false, {0, nullptr} };
-    if (queue->size == 0) return reply;
+    if (queue->size.load() == 0) return reply;
 
     reply.success = true;
     reply.item = queue->items[0];
 
-    for (int i = 1; i < queue->size; ++i) {
+    for (int i = 1; i < queue->size.load(); ++i) {
         queue->items[i - 1] = queue->items[i];
     }
-    queue->size--;
+    queue->size.fetch_sub(1);
 
     return reply;
 }
+
 
 
 Queue* range(Queue* queue, Key start, Key end) {
